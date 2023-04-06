@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model tblSite {
+  id              Int             @id @default(autoincrement())
+  name            String          @db.VarChar
+  sicID           Int
+  createdAt       DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime        @default(now()) @db.Timestamptz(6)
+  pincode         String?         @db.VarChar
+  address         String?         @db.VarChar
+  tblSiteIncharge tblSiteIncharge @relation(fields: [sicID], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tbl_site_sic_id_tbl_site_incharge_id")
+  tblAsset        tblAsset[]
+  tblVLAN         tblVLAN[]
+}
+
+model tblAsset {
+  id              Int               @id @default(autoincrement())
+  serialNumber    String            @db.VarChar
+  siteID          Int
+  typeID          Int
+  isOperational   Boolean           @default(false)
+  note            String?           @db.VarChar
+  isBuybackable   Boolean           @default(false)
+  build           String            @db.VarChar
+  createdAt       DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime          @default(now()) @db.Timestamptz(6)
+  buybackedAt     DateTime?         @db.Timestamptz(6)
+  decomissionedAt DateTime?         @db.Timestamptz(6)
+  tblSite         tblSite           @relation(fields: [siteID], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tbl_asset_site_id_tbl_site_id")
+  tblAssetType    tblAssetType      @relation(fields: [typeID], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tbl_asset_type_tbl_asset_type_id")
+  tblVLANAssetMap tblVLANAssetMap[]
+}
+
+model tblAssetType {
+  id        Int        @id @default(autoincrement())
+  name      String     @db.VarChar
+  oem       String     @db.VarChar
+  model     String     @db.VarChar
+  build     String     @db.VarChar
+  createdAt DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime   @default(now()) @db.Timestamptz(6)
+  tblAsset  tblAsset[]
+}
+
+model tblSiteIncharge {
+  id        Int       @id(map: "tbl_site_engineer_pkey")
+  name      String    @db.VarChar
+  email     String    @db.VarChar
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @default(now()) @db.Timestamptz(6)
+  tblSite   tblSite[]
+}
+
+model tblVLAN {
+  id              Int               @id @default(autoincrement())
+  siteID          Int
+  IP              String            @db.VarChar
+  tag             String            @db.VarChar
+  subnet          String            @db.VarChar
+  gateway         String            @db.VarChar
+  createdAt       DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime          @default(now()) @db.Timestamptz(6)
+  VLANID          Int
+  tblSite         tblSite           @relation(fields: [siteID], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tbl_vlan_site_id_tbl_site_id")
+  tblVLANAssetMap tblVLANAssetMap[]
+}
+
+model tblVLANAssetMap {
+  id        Int      @id @default(autoincrement())
+  VLANID    Int
+  assetID   Int
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @db.Timestamptz(6)
+  tblVLAN   tblVLAN  @relation(fields: [VLANID], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tbl_vlan_asset_map_vlan_id_tbl_vlan_id")
+  tblAsset  tblAsset @relation(fields: [assetID], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tbl_vlan_asset_map_asset_id_tbl_asset_id")
+}
+
+model tblUserTypes {
+  id            Int        @id @default(autoincrement())
+  title         String     @db.VarChar
+  description   String?    @db.VarChar
+  isDisabled    Boolean?   @default(false)
+  createdAt     DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime   @default(now()) @db.Timestamptz(6)
+  disabledAt    DateTime?  @db.Timestamptz(6)
+  disableReason String?    @db.VarChar
+  tblUsers      tblUsers[]
+}
+
+model tblUsers {
+  id            Int          @id @default(autoincrement())
+  firebaseID    String       @db.VarChar(128)
+  phoneNumber   String       @db.VarChar
+  isDisabled    Boolean?     @default(false)
+  createdAt     DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime     @default(now()) @db.Timestamptz(6)
+  disabledAt    DateTime?    @db.Timestamptz(6)
+  disableReason String?      @db.VarChar
+  userTypeID    Int
+  tblUserTypes  tblUserTypes @relation(fields: [userTypeID], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tbl_users_tbl_user_types_id")
+}
